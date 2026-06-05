@@ -1,4 +1,8 @@
-CHATGPT_EXPERT_PROMPT = """You are an elite prompt engineering specialist with deep expertise in OpenAI's ChatGPT architecture, including GPT-4o, GPT-4, and GPT-3.5 models. Your sole purpose is to take a user's raw, unstructured idea and transform it into a meticulously crafted, high-performance prompt optimized specifically for ChatGPT.
+import { NextRequest, NextResponse } from "next/server";
+
+// ─── Expert System Prompts (ported from Python backend) ───
+
+const CHATGPT_EXPERT_PROMPT = `You are an elite prompt engineering specialist with deep expertise in OpenAI's ChatGPT architecture, including GPT-4o, GPT-4, and GPT-3.5 models. Your sole purpose is to take a user's raw, unstructured idea and transform it into a meticulously crafted, high-performance prompt optimized specifically for ChatGPT.
 
 You understand that ChatGPT responds best to prompts that are explicit, well-organized, and leverage structured markdown formatting. ChatGPT excels when given clear role definitions, detailed context, and explicit chain-of-thought reasoning instructions. It benefits from verbose, unambiguous instructions that leave no room for interpretation.
 
@@ -42,10 +46,9 @@ Your optimization principles:
 - Anticipate potential misinterpretations and preemptively address them
 - Leverage ChatGPT's strength in following detailed, structured instructions
 
-IMPORTANT: Output ONLY the optimized prompt. Do not include any meta-commentary, explanations, or preamble."""
+IMPORTANT: Output ONLY the optimized prompt. Do not include any meta-commentary, explanations, or preamble.`;
 
-
-CLAUDE_EXPERT_PROMPT = """You are an elite prompt engineering specialist with deep expertise in Anthropic's Claude architecture, including Claude 3.5 Sonnet, Claude 3 Opus, and Claude 3 Haiku models. Your sole purpose is to take a user's raw, unstructured idea and transform it into a meticulously crafted, high-performance prompt optimized specifically for Claude.
+const CLAUDE_EXPERT_PROMPT = `You are an elite prompt engineering specialist with deep expertise in Anthropic's Claude architecture, including Claude 3.5 Sonnet, Claude 3 Opus, and Claude 3 Haiku models. Your sole purpose is to take a user's raw, unstructured idea and transform it into a meticulously crafted, high-performance prompt optimized specifically for Claude.
 
 You understand that Claude's architecture is uniquely trained to parse and respond to XML-structured prompts with exceptional fidelity. Claude excels with clean hierarchical structures, well-defined boundaries between instruction types, and prompts that leverage its constitutional AI training. Claude responds best to prompts that are precise, well-organized, and respect its preference for structured, tagged content.
 
@@ -117,10 +120,9 @@ Your optimization principles:
 - Anticipate Claude's tendency toward helpfulness and guide it with explicit constraints
 - Take advantage of Claude's strong instruction-following capabilities with clear directives
 
-IMPORTANT: Output ONLY the optimized prompt. Do not include any meta-commentary, explanations, or preamble."""
+IMPORTANT: Output ONLY the optimized prompt. Do not include any meta-commentary, explanations, or preamble.`;
 
-
-GEMINI_EXPERT_PROMPT = """You are an elite prompt engineering specialist with deep expertise in Google's Gemini architecture, including Gemini 1.5 Pro, Gemini 1.5 Flash, and Gemini Ultra models. Your sole purpose is to take a user's raw, unstructured idea and transform it into a meticulously crafted, high-performance prompt optimized specifically for Gemini.
+const GEMINI_EXPERT_PROMPT = `You are an elite prompt engineering specialist with deep expertise in Google's Gemini architecture, including Gemini 1.5 Pro, Gemini 1.5 Flash, and Gemini Ultra models. Your sole purpose is to take a user's raw, unstructured idea and transform it into a meticulously crafted, high-performance prompt optimized specifically for Gemini.
 
 You understand that Gemini's architecture excels with direct, grounded instructions that leverage its multimodal training and massive context window. Gemini responds best to prompts that use clear context anchoring, structured task breakdowns, and concise directives. Unlike models that prefer verbose instructions, Gemini thrives on density — packing maximum information into minimal, well-organized text with clear structural markers.
 
@@ -154,10 +156,10 @@ Output Format:
 - Include a template or skeleton if applicable
 
 Example Pattern (if applicable):
-```
+\`\`\`
 Input: [sample input]
 Output: [expected output for that input]
-```
+\`\`\`
 
 Providing even one input-output example dramatically improves Gemini's performance through few-shot pattern matching.
 
@@ -181,4 +183,124 @@ Your optimization principles:
 - Ensure the prompt is self-contained and requires no external information
 - Take advantage of Gemini's strength in structured reasoning and pattern matching
 
-IMPORTANT: Output ONLY the optimized prompt. Do not include any meta-commentary, explanations, or preamble."""
+IMPORTANT: Output ONLY the optimized prompt. Do not include any meta-commentary, explanations, or preamble.`;
+
+// ─── Groq API Call Helper ───
+
+interface GroqMessage {
+  role: "system" | "user";
+  content: string;
+}
+
+interface GroqChoice {
+  message: {
+    content: string;
+  };
+}
+
+interface GroqResponse {
+  choices: GroqChoice[];
+}
+
+async function callGroq(
+  messages: GroqMessage[],
+  apiKey: string
+): Promise<string> {
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      messages,
+      temperature: 0.7,
+      max_tokens: 4096,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Groq API error (${response.status}): ${errorBody}`);
+  }
+
+  const data: GroqResponse = await response.json();
+  return data.choices[0].message.content;
+}
+
+// ─── API Route Handler ───
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const rawIdea: string = body.raw_idea;
+
+    if (!rawIdea || rawIdea.trim().length === 0) {
+      return NextResponse.json(
+        { detail: "raw_idea is required and must not be empty." },
+        { status: 400 }
+      );
+    }
+
+    if (rawIdea.length > 5000) {
+      return NextResponse.json(
+        { detail: "raw_idea must not exceed 5000 characters." },
+        { status: 400 }
+      );
+    }
+
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { detail: "GROQ_API_KEY environment variable is not set." },
+        { status: 500 }
+      );
+    }
+
+    // Fan-out: Run all 3 expert calls in parallel (replaces LangGraph)
+    const [chatgptResult, claudeResult, geminiResult] = await Promise.all([
+      callGroq(
+        [
+          { role: "system", content: CHATGPT_EXPERT_PROMPT },
+          { role: "user", content: `Here is the raw idea to optimize:\n\n${rawIdea.trim()}` },
+        ],
+        apiKey
+      ),
+      callGroq(
+        [
+          { role: "system", content: CLAUDE_EXPERT_PROMPT },
+          { role: "user", content: `Here is the raw idea to optimize:\n\n${rawIdea.trim()}` },
+        ],
+        apiKey
+      ),
+      callGroq(
+        [
+          { role: "system", content: GEMINI_EXPERT_PROMPT },
+          { role: "user", content: `Here is the raw idea to optimize:\n\n${rawIdea.trim()}` },
+        ],
+        apiKey
+      ),
+    ]);
+
+    return NextResponse.json({
+      chatgpt: {
+        platform: "ChatGPT",
+        optimized_prompt: chatgptResult,
+      },
+      claude: {
+        platform: "Claude",
+        optimized_prompt: claudeResult,
+      },
+      gemini: {
+        platform: "Gemini",
+        optimized_prompt: geminiResult,
+      },
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "An unexpected error occurred.";
+    console.error("Compile error:", message);
+    return NextResponse.json({ detail: message }, { status: 500 });
+  }
+}

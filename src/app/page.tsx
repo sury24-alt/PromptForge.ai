@@ -18,7 +18,7 @@ interface CompileResponse {
   gemini: ExpertOutput;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 
 export default function Home() {
   const [rawIdea, setRawIdea] = useState('');
@@ -34,7 +34,7 @@ export default function Home() {
     setResults(null);
 
     try {
-      const response = await fetch(`${API_URL}/compile`, {
+      const response = await fetch('/api/compile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -57,7 +57,7 @@ export default function Home() {
 
       if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
         setError(
-          'Unable to connect to the PromptForge backend. Make sure the FastAPI server is running on port 8000.'
+          'Unable to connect to the server. Please try again.'
         );
       } else {
         setError(message);

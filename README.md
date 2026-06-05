@@ -2,81 +2,63 @@
 
 A multi-agent prompt compilation engine that takes your raw ideas and generates **platform-optimized prompts** for ChatGPT, Claude, and Gemini simultaneously.
 
-Built with **LangGraph** (parallel multi-agent processing), **FastAPI** (async backend), and **Next.js 14** (premium dark-mode UI).
+Built with **Next.js 16** (App Router + API Routes) and **Groq AI** (Llama 3.3 70B for fast inference).
+
+🔗 **Live Demo**: [Deploy to Vercel →](#-deployment)
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-User Input → FastAPI → LangGraph State Engine
-                            │
-                ┌───────────┼───────────┐
-                ▼           ▼           ▼
-          ChatGPT       Claude       Gemini
-          Expert        Expert       Expert
-          Node          Node         Node
-                ▼           ▼           ▼
-                └───────────┼───────────┘
-                            │
-                    Aggregated JSON → Next.js UI
+User Input → Next.js API Route (/api/compile)
+                    │
+        ┌───────────┼───────────┐
+        ▼           ▼           ▼
+  ChatGPT       Claude       Gemini
+  Expert        Expert       Expert
+  (Groq)        (Groq)       (Groq)
+        ▼           ▼           ▼
+        └───────────┼───────────┘
+                    │
+            Aggregated JSON → React UI
 ```
 
-All three expert nodes run **in parallel**, so you get all three optimized prompts in the time it takes to generate one.
+All three expert calls run **in parallel** using `Promise.all()`, so you get all three optimized prompts in the time it takes to generate one.
 
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Python 3.11+** with `pip`
 - **Node.js 18+** with `npm`
-- **Groq API Key** (Recommended) or **OpenAI API Key**
+- **Groq API Key** — [Get one free at groq.com](https://console.groq.com)
 
-### 1. Backend Setup
+### 1. Clone & Install
 
 ```bash
-cd backend
-
-# Create a virtual environment (recommended)
-python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # macOS/Linux
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure your API keys
-copy .env.example .env
-# Edit .env and add either your GROQ_API_KEY or OPENAI_API_KEY
-
-# Start the server
-uvicorn app.main:app --reload --port 8000
+git clone https://github.com/sury24-alt/PromptForge.ai.git
+cd PromptForge.ai
+npm install
 ```
 
-The backend will be running at `http://localhost:8000`. You can test it at `http://localhost:8000/health`.
-
-### 2. Frontend Setup
+### 2. Configure Environment
 
 ```bash
-cd frontend
+# Create your local environment file
+cp .env.example .env.local
 
-# Install dependencies (already done if you just initialized)
-npm install
+# Edit .env.local and add your Groq API key
+GROQ_API_KEY=your_groq_api_key_here
+```
 
-# Start the dev server
+### 3. Run
+
+```bash
 npm run dev
 ```
 
-The frontend will be running at `http://localhost:3000`.
-
-### 3. Use the App
-
-1. Open `http://localhost:3000` in your browser
-2. Type your raw idea into the text area
-3. Click **Compile** (or press `Ctrl+Enter`)
-4. Three optimized prompts appear — one for each platform
-5. Click **Copy** to grab any prompt and paste it into the target platform
+Open **http://localhost:3000** — that's it! The API routes are built into the same app.
 
 ---
 
@@ -84,10 +66,9 @@ The frontend will be running at `http://localhost:3000`.
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
-| **Orchestration** | LangGraph | Multi-agent state graph with parallel fan-out/fan-in |
-| **LLM** | Groq (Llama-3.3-70b-versatile) / OpenAI (GPT-4o-mini) | Powers all three expert nodes |
-| **API** | FastAPI + Uvicorn | Async HTTP endpoint with CORS |
-| **Frontend** | Next.js 14 (App Router) | React-based SPA with Tailwind CSS |
+| **Frontend** | Next.js 16 (App Router) | React SPA with Tailwind CSS |
+| **API** | Next.js API Routes | Serverless `/api/compile` endpoint |
+| **LLM** | Groq (Llama 3.3 70B) | Powers all three expert nodes |
 | **Icons** | Lucide React | Clean, consistent iconography |
 
 ### Expert Nodes
@@ -101,32 +82,29 @@ The frontend will be running at `http://localhost:3000`.
 ## 📁 Project Structure
 
 ```
-PromptForge AI/
-├── backend/
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py          # FastAPI app, CORS, /compile endpoint
-│   │   ├── graph.py          # LangGraph state machine
-│   │   ├── nodes.py          # Expert node functions
-│   │   ├── prompts.py        # System prompts for each expert
-│   │   └── schemas.py        # Pydantic request/response models
-│   ├── requirements.txt
-│   └── .env.example
-│
-├── frontend/
-│   ├── src/app/
-│   │   ├── layout.tsx         # Root layout with SEO
-│   │   ├── page.tsx           # Main workspace page
-│   │   ├── globals.css        # Dark theme design system
-│   │   └── components/
-│   │       ├── Header.tsx
-│   │       ├── InputPanel.tsx
-│   │       ├── BlueprintCard.tsx
-│   │       ├── LoadingState.tsx
-│   │       └── OutputGrid.tsx
-│   ├── package.json
-│   └── tailwind.config.ts
-│
+PromptForge.ai/
+├── src/
+│   └── app/
+│       ├── api/
+│       │   ├── compile/
+│       │   │   └── route.ts       # Main API — replaces entire Python backend
+│       │   └── health/
+│       │       └── route.ts       # Health check endpoint
+│       ├── components/
+│       │   ├── Header.tsx
+│       │   ├── InputPanel.tsx
+│       │   ├── BlueprintCard.tsx
+│       │   ├── LoadingState.tsx
+│       │   └── OutputGrid.tsx
+│       ├── layout.tsx
+│       ├── page.tsx
+│       └── globals.css
+├── public/
+├── package.json
+├── next.config.ts
+├── tsconfig.json
+├── .env.local                     # Your API key (gitignored)
+├── .env.example                   # Template for new developers
 └── README.md
 ```
 
@@ -134,23 +112,28 @@ PromptForge AI/
 
 ## 🔑 Environment Variables
 
-### Backend (`backend/.env`)
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GROQ_API_KEY` | ⚠️ | Your Groq API key (Used by default for fast, free llama-3.3 inference) |
-| `OPENAI_API_KEY` | ⚠️ | Your OpenAI API key (Fallback if Groq isn't provided) |
+| `GROQ_API_KEY` | ✅ | Your Groq API key for Llama 3.3 inference |
 
+---
 
-### Frontend (optional)
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Backend API URL |
+## 🚢 Deployment
+
+### Deploy to Vercel (Recommended)
+
+1. Push this repo to GitHub
+2. Go to [vercel.com/new](https://vercel.com/new) and import your repository
+3. Add `GROQ_API_KEY` in **Settings → Environment Variables**
+4. Click **Deploy** — Vercel auto-detects Next.js
+
+That's it! Your app will be live at `https://your-project.vercel.app`.
 
 ---
 
 ## 📝 API Reference
 
-### `GET /health`
+### `GET /api/health`
 Health check endpoint.
 
 **Response:**
@@ -158,7 +141,7 @@ Health check endpoint.
 { "status": "healthy", "service": "PromptForge AI" }
 ```
 
-### `POST /compile`
+### `POST /api/compile`
 Compile a raw idea into three optimized prompts.
 
 **Request:**
