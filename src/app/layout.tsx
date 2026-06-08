@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Outfit } from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({
@@ -8,15 +8,21 @@ const inter = Inter({
   display: 'swap',
 });
 
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'PromptForge AI — Multi-Agent Prompt Compiler',
   description:
-    'Compile your raw ideas into platform-optimized prompts for ChatGPT, Claude, and Gemini simultaneously. Powered by a multi-agent parallel processing engine.',
+    'Transform your raw ideas into platform-optimized prompts for ChatGPT, Claude, and Gemini simultaneously. Powered by multi-agent parallel AI processing.',
   keywords: ['prompt engineering', 'AI prompts', 'ChatGPT', 'Claude', 'Gemini', 'LLM', 'prompt optimizer'],
   openGraph: {
     title: 'PromptForge AI — Multi-Agent Prompt Compiler',
     description:
-      'Compile your raw ideas into platform-optimized prompts for ChatGPT, Claude, and Gemini simultaneously.',
+      'Transform your raw ideas into platform-optimized prompts for ChatGPT, Claude, and Gemini simultaneously.',
     type: 'website',
   },
 };
@@ -27,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} dark`}>
+    <html lang="en" className={`${inter.variable} ${outfit.variable} dark`}>
       <body className="antialiased">{children}</body>
     </html>
   );
