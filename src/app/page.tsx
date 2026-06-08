@@ -9,6 +9,7 @@ import LoadingState from './components/LoadingState';
 import Footer from './components/Footer';
 import Toast from './components/Toast';
 import BackgroundMesh from './components/BackgroundMesh';
+import { saveGeneratedBlueprints } from './lib/supabase';
 import { AlertCircle } from 'lucide-react';
 
 interface ExpertOutput {
@@ -60,6 +61,11 @@ export default function Home() {
       const duration = (performance.now() - startTime) / 1000;
       setCompileDuration(duration);
       setResults(data);
+
+      // Auto-save blueprints to Supabase database
+      saveGeneratedBlueprints(rawIdea.trim(), data).catch((err) => {
+        console.error('Failed to auto-save to Supabase:', err);
+      });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'An unexpected error occurred.';
