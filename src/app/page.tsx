@@ -8,6 +8,7 @@ import OutputGrid from './components/OutputGrid';
 import LoadingState from './components/LoadingState';
 import Footer from './components/Footer';
 import Toast from './components/Toast';
+import BackgroundMesh from './components/BackgroundMesh';
 import { AlertCircle } from 'lucide-react';
 
 interface ExpertOutput {
@@ -86,37 +87,8 @@ export default function Home() {
       <Navbar />
 
       <main className="relative min-h-screen pb-8">
-        {/* Constellation Network Background Layer */}
-        <div className="absolute top-0 right-0 w-[45%] h-[750px] pointer-events-none overflow-hidden select-none z-0 hidden lg:block">
-          <svg className="w-full h-full" viewBox="0 0 500 700" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <line x1="250" y1="100" x2="380" y2="150" stroke="rgba(255,255,255,0.04)" strokeWidth="0.75" />
-            <line x1="380" y1="150" x2="480" y2="80" stroke="rgba(255,255,255,0.03)" strokeWidth="0.75" />
-            <line x1="380" y1="150" x2="420" y2="280" stroke="rgba(255,255,255,0.04)" strokeWidth="0.75" />
-            <line x1="250" y1="100" x2="300" y2="240" stroke="rgba(255,255,255,0.03)" strokeWidth="0.75" />
-            <line x1="300" y1="240" x2="420" y2="280" stroke="rgba(255,255,255,0.04)" strokeWidth="0.75" />
-            <line x1="420" y1="280" x2="490" y2="220" stroke="rgba(255,255,255,0.03)" strokeWidth="0.75" />
-            <line x1="300" y1="240" x2="220" y2="350" stroke="rgba(255,255,255,0.03)" strokeWidth="0.75" />
-            <line x1="420" y1="280" x2="380" y2="420" stroke="rgba(255,255,255,0.04)" strokeWidth="0.75" />
-            <line x1="220" y1="350" x2="320" y2="480" stroke="rgba(255,255,255,0.03)" strokeWidth="0.75" />
-            <line x1="380" y1="420" x2="320" y2="480" stroke="rgba(255,255,255,0.04)" strokeWidth="0.75" />
-            <line x1="380" y1="420" x2="470" y2="380" stroke="rgba(255,255,255,0.03)" strokeWidth="0.75" />
-            <line x1="320" y1="480" x2="260" y2="600" stroke="rgba(255,255,255,0.03)" strokeWidth="0.75" />
-            <line x1="320" y1="480" x2="410" y2="580" stroke="rgba(255,255,255,0.04)" strokeWidth="0.75" />
-
-            <circle cx="250" cy="100" r="2" fill="rgba(139, 92, 246, 0.25)" />
-            <circle cx="380" cy="150" r="2.5" fill="rgba(59, 130, 246, 0.3)" />
-            <circle cx="480" cy="80" r="1.5" fill="rgba(6, 182, 212, 0.2)" />
-            <circle cx="300" cy="240" r="2" fill="rgba(139, 92, 246, 0.2)" />
-            <circle cx="420" cy="280" r="3" fill="rgba(6, 182, 212, 0.3)" />
-            <circle cx="490" cy="220" r="2" fill="rgba(255, 255, 255, 0.15)" />
-            <circle cx="220" cy="350" r="2.5" fill="rgba(139, 92, 246, 0.25)" />
-            <circle cx="380" cy="420" r="2" fill="rgba(59, 130, 246, 0.3)" />
-            <circle cx="470" cy="380" r="1.5" fill="rgba(255, 255, 255, 0.15)" />
-            <circle cx="320" cy="480" r="3" fill="rgba(6, 182, 212, 0.3)" />
-            <circle cx="260" cy="600" r="2" fill="rgba(139, 92, 246, 0.2)" />
-            <circle cx="410" cy="580" r="2" fill="rgba(59, 130, 246, 0.2)" />
-          </svg>
-        </div>
+        {/* Animated 3D Constellation Background */}
+        <BackgroundMesh />
 
         <HeroSection />
 
