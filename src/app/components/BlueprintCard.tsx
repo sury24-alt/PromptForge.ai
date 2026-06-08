@@ -8,6 +8,7 @@ interface BlueprintCardProps {
   optimizedPrompt: string;
   animationClass?: string;
   onCopy?: () => void;
+  isFullWidth?: boolean;
 }
 
 const platformConfig = {
@@ -66,7 +67,7 @@ function renderPreview(text: string): string {
   return `<p>${html}</p>`;
 }
 
-export default function BlueprintCard({ platform, optimizedPrompt, animationClass = '', onCopy }: BlueprintCardProps) {
+export default function BlueprintCard({ platform, optimizedPrompt, animationClass = '', onCopy, isFullWidth = false }: BlueprintCardProps) {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'preview' | 'raw'>('preview');
   const config = platformConfig[platform];
@@ -96,6 +97,81 @@ export default function BlueprintCard({ platform, optimizedPrompt, animationClas
       setTimeout(() => setCopied(false), 2000);
     }
   };
+
+  if (isFullWidth) {
+    return (
+      <div className={`glass-card ${config.colorClass} ${animationClass} opacity-0 p-6 flex flex-col md:flex-row gap-6 items-stretch w-full`}>
+        {/* Left column: Badge, title, controls */}
+        <div className="flex flex-col justify-between md:w-[350px] flex-shrink-0 border-b md:border-b-0 md:border-r border-white/5 pb-6 md:pb-0 md:pr-6">
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl" style={{ background: config.badgeBg, border: `1px solid ${config.badgeBorder}` }}>
+                <Icon className="w-6 h-6" style={{ color: config.accentColor }} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-white/90">{platform}</h3>
+                  <span className={`w-2 h-2 rounded-full ${config.dotColor}`} />
+                </div>
+                <p className="text-xs text-[#55556a] mt-0.5">{config.description}</p>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <div className="flex items-center justify-between text-xs text-[#9a9ab0]">
+                <span>Analysis Rating</span>
+                <span className="font-semibold text-emerald-400">9.8/10</span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-[#9a9ab0]">
+                <span>Word Count</span>
+                <span className="font-mono">{wordCount} words</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 mt-8">
+            <div className="tab-bar">
+              <button className={`tab-btn ${activeTab === 'preview' ? 'active' : ''}`} onClick={() => setActiveTab('preview')}>
+                Preview
+              </button>
+              <button className={`tab-btn ${activeTab === 'raw' ? 'active' : ''}`} onClick={() => setActiveTab('raw')}>
+                Raw
+              </button>
+            </div>
+
+            <button
+              id={`copy-${platform.toLowerCase()}-btn`}
+              className={`btn-copy ${copied ? 'copied' : ''}`}
+              onClick={handleCopy}
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  Copy
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Right column: The scrollable text view */}
+        <div className="flex-1 min-h-[300px] md:min-h-0 relative">
+          <div className="absolute inset-0 overflow-y-auto pr-2">
+            {activeTab === 'preview' ? (
+              <div className="prompt-preview" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+            ) : (
+              <div className="prompt-output">{optimizedPrompt}</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

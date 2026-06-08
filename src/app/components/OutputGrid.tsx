@@ -19,12 +19,6 @@ interface OutputGridProps {
 }
 
 export default function OutputGrid({ results, compileDuration, onCopyToast }: OutputGridProps) {
-  const cards: { platform: 'ChatGPT' | 'Claude' | 'Gemini'; data: ExpertOutput; stagger: string }[] = [
-    { platform: 'ChatGPT', data: results.chatgpt, stagger: 'stagger-1' },
-    { platform: 'Claude', data: results.claude, stagger: 'stagger-2' },
-    { platform: 'Gemini', data: results.gemini, stagger: 'stagger-3' },
-  ];
-
   return (
     <section className="relative z-10 max-w-7xl mx-auto px-4 py-6">
       {/* Success banner - left aligned */}
@@ -42,17 +36,36 @@ export default function OutputGrid({ results, compileDuration, onCopyToast }: Ou
         </div>
       </div>
 
-      {/* 3-column grid - left aligned */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {cards.map((card) => (
+      {/* Bento Modern Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+        {/* Row 1: ChatGPT & Claude */}
+        <div className="md:col-span-6 flex flex-col">
           <BlueprintCard
-            key={card.platform}
-            platform={card.platform}
-            optimizedPrompt={card.data.optimized_prompt}
-            animationClass={`animate-fade-in-up ${card.stagger}`}
+            platform="ChatGPT"
+            optimizedPrompt={results.chatgpt.optimized_prompt}
+            animationClass="animate-fade-in-up stagger-1"
             onCopy={onCopyToast}
           />
-        ))}
+        </div>
+        <div className="md:col-span-6 flex flex-col">
+          <BlueprintCard
+            platform="Claude"
+            optimizedPrompt={results.claude.optimized_prompt}
+            animationClass="animate-fade-in-up stagger-2"
+            onCopy={onCopyToast}
+          />
+        </div>
+
+        {/* Row 2: Gemini Full Width */}
+        <div className="md:col-span-12">
+          <BlueprintCard
+            platform="Gemini"
+            optimizedPrompt={results.gemini.optimized_prompt}
+            animationClass="animate-fade-in-up stagger-3"
+            onCopy={onCopyToast}
+            isFullWidth={true}
+          />
+        </div>
       </div>
     </section>
   );
