@@ -7,21 +7,26 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publish
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export async function saveGeneratedBlueprints(userRawInput: string, aiOutputs: any) {
-  const { data, error } = await supabase
-    .from('promptforge') // Matches your newly created table name
-    .insert([
-      {
-        raw_input: userRawInput,
-        blueprints: aiOutputs // Pass the object containing chatgpt, claude, and gemini fields
-      }
-    ])
-    .select();
+  try {
+    const { data, error } = await supabase
+      .from('promptforge') // Matches your newly created table name
+      .insert([
+        {
+          raw_input: userRawInput,
+          blueprints: aiOutputs // Pass the object containing chatgpt, claude, and gemini fields
+        }
+      ])
+      .select();
 
-  if (error) {
-    console.error('Error storing data to Supabase:', error.message);
+    if (error) {
+      console.error('Error storing data to Supabase:', error.message);
+      return null;
+    }
+    
+    console.log('Successfully saved blueprint data!', data);
+    return data;
+  } catch (err) {
+    console.warn('Network error: Could not reach Supabase endpoint. Please verify your NEXT_PUBLIC_SUPABASE_URL is correct.', err);
     return null;
   }
-  
-  console.log('Successfully saved blueprint data!', data);
-  return data;
 }
