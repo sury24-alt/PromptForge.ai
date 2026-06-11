@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
 
 // ─── Expert System Prompts (ported from Python backend) ───
 
@@ -185,48 +186,36 @@ Your optimization principles:
 
 IMPORTANT: Output ONLY the optimized prompt. Do not include any meta-commentary, explanations, or preamble.`;
 
-// ─── Groq API Call Helper ───
+// ─── NVIDIA NIM API Call Helper ───
 
-interface GroqMessage {
+interface NvidiaMessage {
   role: "system" | "user";
   content: string;
 }
 
-interface GroqChoice {
-  message: {
-    content: string;
-  };
-}
-
-interface GroqResponse {
-  choices: GroqChoice[];
-}
-
-async function callGroq(
-  messages: GroqMessage[],
+async function callNvidia(
+  messages: NvidiaMessage[],
   apiKey: string
 ): Promise<string> {
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-      messages,
-      temperature: 0.7,
-      max_tokens: 2048,
-    }),
+  const client = new OpenAI({
+    apiKey: apiKey,
+    baseURL: "https://integrate.api.nvidia.com/v1",
   });
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Groq API error (${response.status}): ${errorBody}`);
-  }
+  const completion = await client.chat.completions.create({
+    model: "nvidia/nemotron-3-nano-30b-a3b",
+    messages,
+    temperature: 0.7,
+    top_p: 1,
+    max_tokens: 4096,
+    stream: false,
+  });
 
-  const data: GroqResponse = await response.json();
-  return data.choices[0].message.content;
+  const content = completion.choices[0]?.message?.content;
+  if (!content) {
+    throw new Error("NVIDIA API returned an empty response.");
+  }
+  return content;
 }
 
 // ─── API Route Handler ───
@@ -250,31 +239,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.GROQ_API_KEY;
+    const apiKey = process.env.NVIDIA_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { detail: "GROQ_API_KEY environment variable is not set." },
+        { detail: "NVIDIA_API_KEY environment variable is not set." },
         { status: 500 }
       );
     }
 
-    // Fan-out: Run all 3 expert calls in parallel (replaces LangGraph)
+    // Fan-out: Run all 3 expert calls in parallel
     const [chatgptResult, claudeResult, geminiResult] = await Promise.all([
-      callGroq(
+      callNvidia(
         [
           { role: "system", content: CHATGPT_EXPERT_PROMPT },
           { role: "user", content: `Here is the raw idea to optimize:\n\n${rawIdea.trim()}` },
         ],
         apiKey
       ),
-      callGroq(
+      callNvidia(
         [
           { role: "system", content: CLAUDE_EXPERT_PROMPT },
           { role: "user", content: `Here is the raw idea to optimize:\n\n${rawIdea.trim()}` },
         ],
         apiKey
       ),
-      callGroq(
+      callNvidia(
         [
           { role: "system", content: GEMINI_EXPERT_PROMPT },
           { role: "user", content: `Here is the raw idea to optimize:\n\n${rawIdea.trim()}` },
